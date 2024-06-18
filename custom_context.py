@@ -15,6 +15,8 @@ from reddit_types import *
 ffmpeg_logger = logging.getLogger("ffmpeg")
 logger = logging.getLogger("bot")
 
+REDDIT_CLIENT_ID=os.getenv("REDDIT_CLIENT_ID")
+REDDIT_CLIENT_SECRET=os.getenv("REDDIT_CLIENT_SECRET")
 
 def ffmpeg_installed():
     try:
@@ -34,8 +36,19 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
     def __init__(self, application: Application, chat_id: int | None = None, user_id: int | None = None):
         super().__init__(application, chat_id, user_id)
         self.client = AsyncClient()
+        self.access_token = None
+
+    async def update_access_token(self):
+        if REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET:
+            req = await self.client.post(
+                "https://www.reddit.com/api/v1/access_token",
+                data={"grant_type": "client_credentials"},
+                auth=(REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET)
+            )
+            self.access_token = req.json()["access_token"]
 
     async def __get_subreddit_submissions_raw(self, subreddit: str, limit: int, sort_by: str = "hot") -> list[dict]:
+        await self.update_access_token()
         req = await self.client.get(f"https://www.reddit.com/r/{subreddit}/{sort_by}.json?limit={limit}&raw_json=1", headers=self.headers)
         req.raise_for_status()
         data = req.json()
@@ -43,6 +56,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
         return submissions
     
     async def __get_submission_raw(self, submission_id: str) -> dict:
+        await self.update_access_token()
         req = await self.client.get(f"https://www.reddit.com/{submission_id}.json?raw_json=1", headers=self.headers)
         if not req.status_code == 301:
             req.raise_for_status()
