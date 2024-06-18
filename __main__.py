@@ -81,7 +81,6 @@ async def manual_reddit_on_channel(update: Update, context: RedditContext):
 
 async def unpinner(update: Update, context: RedditContext):
     group_chats = [(await context.bot.get_chat(channel["channel"])).linked_chat_id for channel in settings["channels"]]
-    print(group_chats)
     if update.effective_chat.id in group_chats:
         await update.effective_message.unpin()
 
