@@ -44,7 +44,8 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
     
     async def __get_submission_raw(self, submission_id: str) -> dict:
         req = await self.client.get(f"https://www.reddit.com/{submission_id}.json?raw_json=1", headers=self.headers)
-        req.raise_for_status()
+        if not req.status_code == 301:
+            req.raise_for_status()
         return (await self.client.send(req.next_request)).json()[0]["data"]["children"][0]["data"]
 
     async def get_subreddit_submissions(self, subreddit: str, limit: int, sort_by: str = "hot") -> list[RedditSubmission]:
