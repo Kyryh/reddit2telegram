@@ -1,5 +1,6 @@
 from telegram.ext import ContextTypes, Application, PicklePersistence, filters, CommandHandler, MessageHandler, Defaults
 from telegram import Update, LinkPreviewOptions
+from telegram.error import BadRequest
 import logging
 import asyncio
 from datetime import datetime, timedelta
@@ -83,7 +84,10 @@ async def manual_reddit_on_channel(update: Update, context: RedditContext):
 async def unpinner(update: Update, context: RedditContext):
     group_chats = [(await context.bot.get_chat(channel["channel"])).linked_chat_id for channel in settings["channels"]]
     if update.effective_chat.id in group_chats:
-        await update.effective_message.unpin()
+        try:
+            await update.effective_message.unpin()
+        except BadRequest:
+            pass
 
 async def post_init(application: Application):
     application.bot_data.setdefault("sent_submissions", defaultdict(list))
