@@ -1,4 +1,4 @@
-from telegram.ext import ContextTypes, Application, PicklePersistence, filters, CommandHandler, MessageHandler, Defaults, BaseRateLimiter
+from telegram.ext import ContextTypes, Application, PicklePersistence, filters, CommandHandler, MessageHandler, Defaults
 from telegram import Update, LinkPreviewOptions
 import logging
 import asyncio
