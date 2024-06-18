@@ -52,10 +52,10 @@ async def reddit_posts(update: Update, context: RedditContext):
     if not context.args:
         await update.effective_message.reply_text("Syntax:\n/reddit <subreddit> <number_of_posts (optional)>")
         return
-    submissions = await context.get_subreddit_submissions(context.args[0], context.args[1] if len(context.args) > 1 else 10)
+    submissions = await context.get_subreddit_submissions_raw(context.args[0], context.args[1] if len(context.args) > 1 else 10)
     for submission in submissions:
         try:
-            await context.send_reddit_post(update.effective_chat.id, submission)
+            await context.send_reddit_post(update.effective_chat.id, await context.parse_submission(submission))
         except Exception as e:
             await context.bot.send_message(chat_id = OWNER_USER_ID, text = f'{e} in post {submission.id}')
             logging.error(traceback.format_exc())
@@ -64,7 +64,8 @@ async def reddit_posts(update: Update, context: RedditContext):
 
 async def reddit_on_channel(context: RedditContext):
     for channel in settings["channels"]:
-        for submission in await context.get_subreddit_submissions(channel["subreddits"], channel["limit"], channel["sort_by"]):
+        for submission in await context.get_subreddit_submissions_raw(channel["subreddits"], channel["limit"], channel["sort_by"]):
+            submission = await context.parse_submission(submission)
             try:
                 if submission.id not in context.bot_data["sent_submissions"][channel["channel"]]:
                     await context.send_reddit_post(channel["channel"], submission)

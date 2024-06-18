@@ -52,7 +52,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
             )
             self.access_token = req.json()["access_token"]
 
-    async def __get_subreddit_submissions_raw(self, subreddit: str, limit: int, sort_by: str = "hot") -> list[dict]:
+    async def get_subreddit_submissions_raw(self, subreddit: str, limit: int, sort_by: str = "hot") -> list[dict]:
         await self.update_access_token()
         if self.access_token:
             req = await self.client.get(f"https://oauth.reddit.com/r/{subreddit}/{sort_by}?limit={limit}&raw_json=1", headers=self.headers)
@@ -63,7 +63,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
         submissions = [submission["data"] for submission in data["data"]["children"]]
         return submissions
     
-    async def __get_submission_raw(self, submission_id: str) -> dict:
+    async def get_submission_raw(self, submission_id: str) -> dict:
         await self.update_access_token()
         if self.access_token:
             req = await self.client.get(f"https://oauth.reddit.com/comments/{submission_id}?raw_json=1", headers=self.headers)
@@ -73,15 +73,15 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
         return req.json()[0]["data"]["children"][0]["data"]
 
     async def get_subreddit_submissions(self, subreddit: str, limit: int, sort_by: str = "hot") -> list[RedditSubmission]:
-        return [await self.__parse_submission(s) for s in await self.__get_subreddit_submissions_raw(subreddit, limit, sort_by)]
+        return [await self.parse_submission(s) for s in await self.get_subreddit_submissions_raw(subreddit, limit, sort_by)]
     
     async def get_submission(self, submission_id: str) -> RedditSubmission:
-        return await self.__parse_submission(await self.__get_submission_raw(submission_id))
+        return await self.parse_submission(await self.get_submission_raw(submission_id))
     
     async def get_media_size(self, url: str):
         return int((await self.client.head(url)).headers["Content-Length"])
     
-    async def __parse_submission(self, s: dict) -> RedditSubmission:
+    async def parse_submission(self, s: dict) -> RedditSubmission:
         submission = RedditSubmission(
             s["title"],
             s["id"],
