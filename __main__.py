@@ -117,9 +117,9 @@ def main():
 
     job = application.job_queue
     
-    application.add_handler(CommandHandler('reddit', reddit_post, filters.User(266949564)))
-    application.add_handler(CommandHandler('reddits', reddit_posts, filters.User(266949564)))
-    application.add_handler(CommandHandler('manual_reddit_on_channel', manual_reddit_on_channel, filters.User(266949564)))
+    application.add_handler(CommandHandler('reddit', reddit_post, filters.User(OWNER_USER_ID)))
+    application.add_handler(CommandHandler('reddits', reddit_posts, filters.User(OWNER_USER_ID)))
+    application.add_handler(CommandHandler('manual_reddit_on_channel', manual_reddit_on_channel, filters.User(OWNER_USER_ID)))
     application.add_handler(MessageHandler(filters.IS_AUTOMATIC_FORWARD, unpinner))
 
     job.run_repeating(reddit_on_channel, interval=settings["interval"]*60, first=datetime_round(datetime.now(pytz.UTC), settings["interval"]))

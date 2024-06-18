@@ -1,7 +1,10 @@
 {
     "channels": [
         {
-
+            "subreddits": "Ultrakill",
+            "channel": -1001921390311,
+            "limit": 15,
+            "sort_by": "hot"
         }
     ],
     "interval": 30
