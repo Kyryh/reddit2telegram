@@ -36,12 +36,15 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
         self.client = AsyncClient()
 
     async def __get_subreddit_submissions_raw(self, subreddit: str, limit: int, sort_by: str = "hot") -> list[dict]:
-        data = (await self.client.get(f"https://www.reddit.com/r/{subreddit}/{sort_by}.json?limit={limit}&raw_json=1", headers=self.headers)).json()
+        req = await self.client.get(f"https://www.reddit.com/r/{subreddit}/{sort_by}.json?limit={limit}&raw_json=1", headers=self.headers)
+        req.raise_for_status()
+        data = req.json()
         submissions = [submission["data"] for submission in data["data"]["children"]]
         return submissions
     
     async def __get_submission_raw(self, submission_id: str) -> dict:
         req = await self.client.get(f"https://www.reddit.com/{submission_id}.json?raw_json=1", headers=self.headers)
+        req.raise_for_status()
         return (await self.client.send(req.next_request)).json()[0]["data"]["children"][0]["data"]
 
     async def get_subreddit_submissions(self, subreddit: str, limit: int, sort_by: str = "hot") -> list[RedditSubmission]:
