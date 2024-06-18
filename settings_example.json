@@ -1,0 +1,17 @@
+{
+    "channels": [
+        {
+            "subreddits": "science",
+            "channel": -1000123456789,
+            "limit": 15,
+            "sort_by": "hot"
+        },
+        {
+            "subreddits": "funny+Jokes",
+            "channel": "@channellink",
+            "limit": 20,
+            "sort_by": "top"
+        }
+    ],
+    "interval": 30
+}
