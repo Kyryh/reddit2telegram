@@ -15,7 +15,7 @@ from collections import defaultdict
 __import__("dotenv").load_dotenv()
 
 TOKEN = getenv("TOKEN")
-OWNER_USER_ID = getenv("OWNER_USER_ID")
+OWNER_USER_ID = int(getenv("OWNER_USER_ID"))
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
