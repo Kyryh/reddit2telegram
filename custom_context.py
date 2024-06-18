@@ -31,12 +31,17 @@ def chunks(lst: list, n: int):
 
 
 class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
-    headers = {"User-Agent": "kyryh/reddit2telegram"}
+    __base_headers = {"User-Agent": "kyryh/reddit2telegram"}
 
     def __init__(self, application: Application, chat_id: int | None = None, user_id: int | None = None):
         super().__init__(application, chat_id, user_id)
         self.client = AsyncClient()
-        self.access_token = None
+        self.access_token: str | None = None
+
+    @property
+    def headers(self):
+        return (self.__base_headers | {"Authorization": f"bearer {self.access_token}"}
+                if self.access_token else self.__base_headers)
 
     async def update_access_token(self):
         if REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET:
@@ -49,7 +54,10 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
 
     async def __get_subreddit_submissions_raw(self, subreddit: str, limit: int, sort_by: str = "hot") -> list[dict]:
         await self.update_access_token()
-        req = await self.client.get(f"https://www.reddit.com/r/{subreddit}/{sort_by}.json?limit={limit}&raw_json=1", headers=self.headers)
+        if self.access_token:
+            req = await self.client.get(f"https://oauth.reddit.com/r/{subreddit}/{sort_by}?limit={limit}&raw_json=1", headers=self.headers)
+        else:
+            req = await self.client.get(f"https://www.reddit.com/r/{subreddit}/{sort_by}.json?limit={limit}&raw_json=1", headers=self.headers)
         req.raise_for_status()
         data = req.json()
         submissions = [submission["data"] for submission in data["data"]["children"]]
@@ -57,10 +65,12 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
     
     async def __get_submission_raw(self, submission_id: str) -> dict:
         await self.update_access_token()
-        req = await self.client.get(f"https://www.reddit.com/{submission_id}.json?raw_json=1", headers=self.headers)
-        if not req.status_code == 301:
-            req.raise_for_status()
-        return (await self.client.send(req.next_request)).json()[0]["data"]["children"][0]["data"]
+        if self.access_token:
+            req = await self.client.get(f"https://oauth.reddit.com/comments/{submission_id}?raw_json=1", headers=self.headers)
+        else:
+            req = await self.client.get(f"https://www.reddit.com/comments/{submission_id}.json?raw_json=1", headers=self.headers)
+        req.raise_for_status()
+        return req.json()[0]["data"]["children"][0]["data"]
 
     async def get_subreddit_submissions(self, subreddit: str, limit: int, sort_by: str = "hot") -> list[RedditSubmission]:
         return [await self.__parse_submission(s) for s in await self.__get_subreddit_submissions_raw(subreddit, limit, sort_by)]
