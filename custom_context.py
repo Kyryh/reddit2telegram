@@ -138,7 +138,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                     ffmpeg_logger.info(output)
                 result.check_returncode()
 
-                thumb = re.search(r'<shreddit-player.*poster="(.*?)".*<\/shreddit-player>', req, re.S).group(1)
+                #thumb = re.search(r'<shreddit-player.*poster="(.*?)".*<\/shreddit-player>', req, re.S).group(1)
 
                 with open("video.mp4", "rb") as f:
                     submission.data = RedditVideo(
@@ -146,7 +146,8 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                         s["media"]["reddit_video"]["width"],
                         s["media"]["reddit_video"]["height"],
                         s["media"]["reddit_video"]["duration"],
-                        unescape_html(thumb)
+                        #unescape_html(thumb)
+                        s["preview"]["images"][0]["resolutions"][-1]["url"]
                     )
                 os.remove("video.mp4")
             else:
