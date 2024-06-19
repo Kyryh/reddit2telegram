@@ -35,6 +35,9 @@ def chunks(lst: list, n: int):
 class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
     __base_headers = {"User-Agent": "kyryh/reddit2telegram"}
 
+    SPOILER_START = "&gt;!"
+    SPOILER_END = "!&lt;"
+
     def __init__(self, application: Application, chat_id: int | None = None, user_id: int | None = None):
         super().__init__(application, chat_id, user_id)
         self.client = AsyncClient()
@@ -223,7 +226,10 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
             entire_text += f"<b>{escape_html(submission.title)}</b>\n\n"
             if submission.should_hide():
                 entire_text += "<tg-spoiler>"
-            entire_text += escape_html(submission.text)
+            text = escape_html(submission.text)
+            if not submission.should_hide():
+                text = text.replace(self.SPOILER_START, "<tg-spoiler>").replace(self.SPOILER_END, "</tg-spoiler>")
+            entire_text += text
             if submission.should_hide():
                 entire_text += "</tg-spoiler>"
             entire_text += "\n\n" + escape_html(submission.post_url)
