@@ -40,8 +40,8 @@ async def reddit_post(update: Update, context: RedditContext):
     if not context.args:
         await update.effective_message.reply_text("Syntax:\n/reddit <post_id>")
         return
-    submission = await context.get_submission(context.args[0])
     try:
+        submission = await context.get_submission(context.args[0])
         await context.send_reddit_post(update.effective_chat.id, submission)
     except Exception as e:
         await context.bot.send_message(chat_id = OWNER_USER_ID, text = f"{e} in post {submission.id}")
@@ -66,15 +66,15 @@ async def reddit_posts(update: Update, context: RedditContext):
 async def reddit_on_channel(context: RedditContext):
     for channel in settings["channels"]:
         for submission in await context.get_subreddit_submissions_raw(channel["subreddits"], channel["limit"], channel["sort_by"]):
-            submission = await context.parse_submission(submission)
-            try:
-                if submission.id not in context.bot_data["sent_submissions"][channel["channel"]]:
+            if submission.id not in context.bot_data["sent_submissions"][channel["channel"]]:
+                try:
+                    submission = await context.parse_submission(submission)
                     await context.send_reddit_post(channel["channel"], submission)
                     context.bot_data["sent_submissions"][channel["channel"]].append(submission.id)
                     await asyncio.sleep(5)
-            except Exception as e:
-                await context.bot.send_message(chat_id = OWNER_USER_ID, text = f'{e} in post {submission.id}')
-                logging.error(traceback.format_exc())
+                except Exception as e:
+                    await context.bot.send_message(chat_id = OWNER_USER_ID, text = f'{e} in post {submission.id}')
+                    logging.error(traceback.format_exc())
 
 
 async def manual_reddit_on_channel(update: Update, context: RedditContext):
