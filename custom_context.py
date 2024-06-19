@@ -176,15 +176,14 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                 metadata = s["media_metadata"][media_id]
                 gallery.append(RedditGalleryMedia(
                     media = (
-                        metadata["s"].get("u") or
                         metadata["s"].get("gif") or
-                        metadata["s"].get("mp4")
+                        metadata["s"].get("u")
                     ),
-                    media_lower = (
-                        metadata["p"][-1].get("u") or
-                        metadata["p"][-1].get("gif") or
-                        metadata["p"][-1].get("mp4")
-                    ) if metadata["p"] else None,
+                    media_lower = 
+                        metadata["s"].get("mp4") or (
+                            metadata["p"][-1].get("u")
+                            if metadata["p"] else None
+                        ),
                     type = metadata["e"],
                     caption = media.get("caption", "")
                 ))
@@ -328,8 +327,8 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
 
                 gallery.append(
                     InputMedia(
-                        #(await self.client.get(item.media)).content,
-                        item.media,
+                        item.media if item.type == "Image" else
+                        (await self.client.get(item.media)).content,
                         item.caption,
                         has_spoiler=submission.should_hide()
                     )
@@ -337,8 +336,8 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                 if item.media_lower is not None:
                     gallery_lower.append(
                         InputMedia(
-                            #(await self.client.get(item.media_lower)).content,
-                            item.media_lower,
+                            item.media_lower if item.type == "Image" else
+                            (await self.client.get(item.media_lower)).content,
                             item.caption,
                             has_spoiler=submission.should_hide()
                         )
