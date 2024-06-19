@@ -163,3 +163,4 @@ cython_debug/
 .vscode/
 *.pickle
 settings.json
+video.mp4
