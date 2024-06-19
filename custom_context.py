@@ -84,6 +84,8 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
         return int((await self.client.head(url)).headers["Content-Length"])
     
     async def parse_submission(self, s: dict) -> RedditSubmission:
+        if s.get("removed_by_category"):
+            raise Exception("The post has been deleted")
         submission = RedditSubmission(
             s["title"],
             s["id"],
