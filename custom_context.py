@@ -22,7 +22,7 @@ REDDIT_CLIENT_SECRET=os.getenv("REDDIT_CLIENT_SECRET")
 
 def ffmpeg_installed():
     try:
-        subprocess.run('ffmpeg -v quiet')
+        subprocess.run(["ffmpeg", "-v", "quiet"])
         return True
     except FileNotFoundError:
         return False
