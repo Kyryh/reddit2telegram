@@ -45,7 +45,7 @@ async def reddit_post(update: Update, context: RedditContext):
         submission = await context.parse_submission(submission_dict)
         await context.send_reddit_post(update.effective_chat.id, submission)
     except Exception as e:
-        await context.bot.send_message(chat_id = OWNER_USER_ID, text = f"{e} in post {submission_dict['id']}")
+        await context.bot.send_message(chat_id = OWNER_USER_ID, text = f"{e} in post {context.args[0]}")
         logging.error(traceback.format_exc())
 
 
