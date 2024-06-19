@@ -233,7 +233,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                 texts[0] += "</tg-spoiler>"
                 texts[-1] = "<tg-spoiler>" + texts[-1]
                 for i in range(1, len(texts)-1):
-                    text[i] = "<tg-spoiler>" + texts[i] + "</tg-spoiler>"
+                    texts[i] = "<tg-spoiler>" + texts[i] + "</tg-spoiler>"
             for text in texts:
                 await self.bot.send_message(
                     chat_id = chat_id,
