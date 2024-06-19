@@ -141,7 +141,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                             break
 
                 result = subprocess.run(
-                    f'ffmpeg -i "{video}" -i "{audio}" -y -v warning -c copy video.mp4',
+                    ["ffmpeg", "-i", video, "-i", audio, "-y", "-v", "warning", "-c", "copy", "video.mp4"],
                     capture_output=True,
                     text=True
                 )
