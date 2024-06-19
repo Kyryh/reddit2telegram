@@ -222,19 +222,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
     async def send_reddit_post(self, chat_id: int, submission: RedditSubmission):
         if not submission.data:
 
-            entire_text = "🔞NSFW🔞\n" if submission.nsfw else ""
-            entire_text += f"<b>{escape_html(submission.title)}</b>\n\n"
-            if submission.should_hide():
-                entire_text += "<tg-spoiler>"
-            text = escape_html(submission.text)
-            if not submission.should_hide():
-                text = text.replace(self.SPOILER_START, "<tg-spoiler>").replace(self.SPOILER_END, "</tg-spoiler>")
-            entire_text += text
-            if submission.should_hide():
-                entire_text += "</tg-spoiler>"
-            entire_text += "\n\n" + escape_html(submission.post_url)
-
-            texts = textwrap.wrap(entire_text, 4000, fix_sentence_endings = False, replace_whitespace = False)
+            texts = textwrap.wrap(submission.get_text(), 4000, fix_sentence_endings = False, replace_whitespace = False)
             if len(texts) > 1 and submission.should_hide():
                 texts[0] += "</tg-spoiler>"
                 texts[-1] = "<tg-spoiler>" + texts[-1]
