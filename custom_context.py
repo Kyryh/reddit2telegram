@@ -35,8 +35,12 @@ def chunks(lst: list, n: int):
 class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
     __base_headers = {"User-Agent": "kyryh/reddit2telegram"}
 
-    SPOILER_START = "&gt;!"
-    SPOILER_END = "!&lt;"
+    __telegram_html_tags = [
+        "b", "strong", "i", "em",
+        "u", "ins", "s", "strike",
+        "del", "span", "a", "code",
+        "pre", "code", "blockquote"
+    ]
 
     def __init__(self, application: Application, chat_id: int | None = None, user_id: int | None = None):
         super().__init__(application, chat_id, user_id)
@@ -92,7 +96,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
         submission = RedditSubmission(
             s["title"],
             s["id"],
-            s["selftext"].strip(),
+            self.parse_selftext(s["selftext_html"] or ""),
             s["spoiler"],
             s["over_18"]
         )
@@ -218,6 +222,13 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
 
         return submission
 
+    def parse_selftext(self, selftext_html: str):
+        matches: list[str] = re.findall(r"<(.*?)>", selftext_html)
+        for match in matches:
+            if not any((match.startswith(tag) or match.startswith("/"+tag)) for tag in self.__telegram_html_tags):
+                selftext_html = selftext_html.replace(f"<{match}>", "")
+        selftext_html = selftext_html.replace('<span class="md-spoiler-text">', '<span class="tg-spoiler">')
+        return selftext_html
 
     async def send_reddit_post(self, chat_id: int, submission: RedditSubmission):
         if not submission.data:

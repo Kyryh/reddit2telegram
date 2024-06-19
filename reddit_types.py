@@ -15,12 +15,12 @@ class RedditSubmission:
 
     def get_text(self):
         text = "🔞NSFW🔞\n" if self.nsfw else ""
-        text += escape(self.title)
+        text += f"<b>{escape(self.title)}</b>"
         if self.text:
             if self.should_hide():
-                text += f"\n\n<tg-spoiler>{escape(self.text)}</tg-spoiler>"
+                text += f"\n\n<tg-spoiler>{self.text}</tg-spoiler>"
             else:
-                text += f"\n\n{escape(self.text)}"
+                text += f"\n\n{self.text}"
         text += f"\n\n{escape(self.post_url)}"
         return text
 
