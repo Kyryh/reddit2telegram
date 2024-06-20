@@ -205,7 +205,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
             else:
                 gifs: list = [gif["url"] for gif in s["preview"]["images"][0]["variants"]["gif"]["resolutions"]]
                 gifs.append(s["preview"]["images"][0]["variants"]["gif"]["source"]["url"])
-            submission.data = RedditGif(gifs)
+            submission.data = RedditGif(gifs[::-1])
         elif s.get("url_overridden_by_dest", "").startswith("https://i.redd"):
             if "preview" in og_s:
                 images: list = [img["url"] for img in og_s["preview"]["images"][0]["resolutions"]]
