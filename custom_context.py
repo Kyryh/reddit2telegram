@@ -122,10 +122,16 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                     )
                 )
 
-                submission.data = RedditVideo([
-                    video["source"]["url"]
-                    for video in video_urls["playbackMp4s"]["permutations"][::-1]
-                ])
+                submission.data = RedditVideo(
+                    [
+                        video["source"]["url"]
+                        for video in video_urls["playbackMp4s"]["permutations"][::-1]
+                    ],
+                    s["media"]["reddit_video"]["width"],
+                    s["media"]["reddit_video"]["height"],
+                    s["media"]["reddit_video"]["duration"],
+                    s["preview"]["images"][0]["resolutions"][-1]["url"]
+                )
 
             elif ffmpeg_installed():
                 video_info = await self.client.get(s["media"]["reddit_video"]["dash_url"], headers=self.headers)
