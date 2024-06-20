@@ -225,7 +225,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
     def parse_selftext(self, selftext_html: str):
         matches: list[str] = re.findall(r"<(.*?)>", selftext_html)
         for match in matches:
-            if not any((match.startswith(tag) or match.startswith("/"+tag)) for tag in self.__telegram_html_tags):
+            if not any(match.split(" ")[0] in (tag, "/"+tag) for tag in self.__telegram_html_tags):
                 selftext_html = selftext_html.replace(f"<{match}>", "")
         selftext_html = selftext_html.replace('<span class="md-spoiler-text">', '<span class="tg-spoiler">')
         return selftext_html
