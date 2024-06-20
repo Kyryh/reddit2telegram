@@ -258,7 +258,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                     raise e
                 if isinstance(current_media, str) and await self.get_media_size(current_media) < 50_000_000:
                     current_media = await self.client.get(current_media)
-                    filename = current_media.url.path[1:]
+                    filename = current_media.url.path.split("/")[-1]
                 else:
                     index += 1
                     current_media = media[index]
