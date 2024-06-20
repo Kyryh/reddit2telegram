@@ -1,8 +1,9 @@
 import asyncio
+from typing import Any, Callable, Coroutine
 from httpx import AsyncClient
 from telegram.ext import Application, CallbackContext, ExtBot
 from telegram.error import BadRequest
-from telegram import InputMediaPhoto, InputMediaVideo
+from telegram import InputMediaPhoto, InputMediaVideo, Message
 from html import escape as escape_html, unescape as unescape_html
 import textwrap
 import re
@@ -230,6 +231,35 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
         selftext_html = selftext_html.replace('<span class="md-spoiler-text">', '<span class="tg-spoiler">')
         return selftext_html
 
+    async def send_media(self, bot_method: Callable[..., Coroutine[Any, Any, Message]], chat_id: int | str, media: list[str | bytes], **kwargs):
+        index = 0
+        current_media = media[0]
+        while index < len(media):
+            try:
+                message = await bot_method(
+                    chat_id,
+                    current_media,
+                    **kwargs,
+                    parse_mode="HTML",
+                    show_caption_above_media=True
+                )
+                return message
+            except BadRequest as e:
+                if e.message not in [
+                        "Wrong file identifier/http url specified",
+                        "Wrong type of the web page content",
+                        "Failed to get http url content",
+                        "Photo_invalid_dimensions"
+                    ]:
+                    raise e
+                if isinstance(current_media, str) and await self.get_media_size(current_media) < 50_000_000:
+                    current_media = await self.client.get(current_media)
+                else:
+                    index += 1
+                    current_media = media[index]
+        return None
+
+
     async def send_reddit_post(self, chat_id: int, submission: RedditSubmission):
         if not submission.data:
 
@@ -246,22 +276,29 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                     parse_mode = "HTML"
                 )
         elif isinstance(submission.data, RedditImage):
-            image_sent = False
-            for image in submission.data.resolutions:
-                try:
-                    await self.bot.send_photo(
-                        chat_id = chat_id,
-                        photo = image,
-                        caption = submission.get_text(),
-                        has_spoiler = submission.should_hide(),
-                        parse_mode="HTML",
-                        show_caption_above_media=True
-                    )
-                    image_sent = True
-                    break
-                except BadRequest as e:
-                    if e.message not in ["Wrong file identifier/http url specified", "Wrong type of the web page content", "Failed to get http url content"]:
-                        raise e
+            # image_sent = False
+            # for image in submission.data.resolutions:
+            #     try:
+            #         await self.bot.send_photo(
+            #             chat_id = chat_id,
+            #             photo = image,
+            #             caption = submission.get_text(),
+            #             has_spoiler = submission.should_hide(),
+            #             parse_mode="HTML",
+            #             show_caption_above_media=True
+            #         )
+            #         image_sent = True
+            #         break
+            #     except BadRequest as e:
+            #         if e.message not in ["Wrong file identifier/http url specified", "Wrong type of the web page content", "Failed to get http url content"]:
+            #             raise e
+            image_sent = await self.send_media(
+                self.bot.send_photo,
+                chat_id,
+                submission.data.resolutions,
+                caption = submission.get_text(),
+                has_spoiler = submission.should_hide(),
+            )
             if not image_sent:
                 logger.warning("Failed sending image as photo, sending it as url instead")
                 submission.text += "\n\n" + submission.data.resolutions[0]
@@ -269,49 +306,67 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                 await self.send_reddit_post(chat_id, submission)
                 
         elif isinstance(submission.data, RedditVideo):
-            video_sent = False
-            for video in submission.data.resolutions:
-                try:
-                    await self.bot.send_video(
-                        chat_id = chat_id,
-                        video = video,
-                        duration = submission.data.duration,
-                        caption = submission.get_text(),
-                        width = submission.data.width,
-                        height = submission.data.height,
-                        parse_mode = "HTML",
-                        supports_streaming = True,
-                        has_spoiler = submission.should_hide(),
-                        thumbnail = (await self.client.get(submission.data.thumbnail)).content if submission.data.thumbnail else None,
-                        show_caption_above_media=True
-                    )
-                    video_sent = True
-                    break
-                except BadRequest as e:
-                    if e.message not in ["Wrong file identifier/http url specified", "Wrong type of the web page content", "Failed to get http url content"]:
-                        raise e
-                    continue
+            # video_sent = False
+            # for video in submission.data.resolutions:
+            #     try:
+            #         await self.bot.send_video(
+            #             chat_id = chat_id,
+            #             video = video,
+            #             duration = submission.data.duration,
+            #             caption = submission.get_text(),
+            #             width = submission.data.width,
+            #             height = submission.data.height,
+            #             parse_mode = "HTML",
+            #             supports_streaming = True,
+            #             has_spoiler = submission.should_hide(),
+            #             thumbnail = (await self.client.get(submission.data.thumbnail)).content if submission.data.thumbnail else None,
+            #             show_caption_above_media=True
+            #         )
+            #         video_sent = True
+            #         break
+            #     except BadRequest as e:
+            #         if e.message not in ["Wrong file identifier/http url specified", "Wrong type of the web page content", "Failed to get http url content"]:
+            #             raise e
+            #         continue
+            video_sent = await self.send_media(
+                self.bot.send_video,
+                chat_id,
+                submission.data.resolutions,
+                duration = submission.data.duration,
+                caption = submission.get_text(),
+                width = submission.data.width,
+                height = submission.data.height,
+                supports_streaming = True,
+                has_spoiler = submission.should_hide(),
+                thumbnail = (await self.client.get(submission.data.thumbnail)).content if submission.data.thumbnail else None
+            )
             if not video_sent:
                 raise Exception("something happened idk what (video)")
 
         elif isinstance(submission.data, RedditGif):
-            gif_sent = False
-            for gif in submission.data.resolutions:
-                try:
-                    await self.bot.send_animation(
-                        chat_id = chat_id,
-                        animation = gif,
-                        caption = submission.get_text(),
-                        has_spoiler = submission.should_hide(),
-                        parse_mode="HTML",
-                        show_caption_above_media=True
-                    )
-                    gif_sent = True
-                    break
-                except BadRequest as e:
-                    if e.message not in ["Wrong file identifier/http url specified", "Wrong type of the web page content", "Failed to get http url content"]:
-                        raise e
-                    continue
+            # for gif in submission.data.resolutions:
+            #     try:
+            #         await self.bot.send_animation(
+            #             chat_id = chat_id,
+            #             animation = gif,
+            #             caption = submission.get_text(),
+            #             has_spoiler = submission.should_hide(),
+            #             parse_mode="HTML",
+            #             show_caption_above_media=True
+            #         )
+            #         gif_sent = True
+            #         break
+            #     except BadRequest as e:
+            #         if e.message not in ["Wrong file identifier/http url specified", "Wrong type of the web page content", "Failed to get http url content"]:
+            #             raise e
+            #         continue
+            gif_sent = await self.send_media(
+                self.bot.send_animation,
+                chat_id,
+                submission.data.resolutions,
+                caption = submission.get_text(),
+                has_spoiler = submission.should_hide(),
+            )
             if not gif_sent:
                 raise Exception("something happened idk what (gif)")
             
