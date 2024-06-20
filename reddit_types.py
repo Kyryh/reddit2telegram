@@ -49,8 +49,11 @@ class RedditGalleryMedia:
         self.caption = caption
 
 class RedditGif(RedditData):
-    def __init__(self, resolutions: list[str]):
+    def __init__(self, resolutions: list[str], width: int = None, height: int = None, thumbnail: str = None):
         self.resolutions = resolutions
+        self.width = width
+        self.height = height
+        self.thumbnail = thumbnail
 
 class RedditImage(RedditData):
     def __init__(self, resolutions: list[str]):

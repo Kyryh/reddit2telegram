@@ -203,7 +203,12 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
             else:
                 gifs: list = [gif["url"] for gif in s["preview"]["images"][0]["variants"]["gif"]["resolutions"]]
                 gifs.append(s["preview"]["images"][0]["variants"]["gif"]["source"]["url"])
-            submission.data = RedditGif(gifs[::-1])
+            submission.data = RedditGif(
+                gifs[::-1],
+                s["preview"]["images"][0]["resolutions"][-1]["width"],
+                s["preview"]["images"][0]["resolutions"][-1]["height"],
+                s["preview"]["images"][0]["resolutions"][-1]["url"]
+            )
         elif s.get("url_overridden_by_dest", "").startswith("https://i.redd"):
             if "preview" in og_s:
                 images: list = [img["url"] for img in og_s["preview"]["images"][0]["resolutions"]]
@@ -231,6 +236,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
     async def send_media(self, bot_method: Callable[..., Coroutine[Any, Any, Message]], chat_id: int | str, media: list[str | bytes], **kwargs):
         index = 0
         current_media = media[0]
+        filename = None
         while index < len(media):
             try:
                 message = await bot_method(
@@ -238,7 +244,8 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                     current_media,
                     **kwargs,
                     parse_mode="HTML",
-                    show_caption_above_media=True
+                    show_caption_above_media=True,
+                    filename=filename
                 )
                 return message
             except BadRequest as e:
@@ -251,6 +258,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                     raise e
                 if isinstance(current_media, str) and await self.get_media_size(current_media) < 50_000_000:
                     current_media = await self.client.get(current_media)
+                    filename = current_media.url.path[1:]
                 else:
                     index += 1
                     current_media = media[index]
@@ -309,6 +317,9 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                 submission.data.resolutions,
                 caption = submission.get_text(),
                 has_spoiler = submission.should_hide(),
+                width = submission.data.width,
+                height = submission.data.height,
+                thumbnail = (await self.client.get(submission.data.thumbnail)).content if submission.data.thumbnail else None
             )
             if not gif_sent:
                 raise Exception("something happened idk what (gif)")
