@@ -40,13 +40,7 @@ async def reddit_post(update: Update, context: RedditContext):
     if not context.args:
         await update.effective_message.reply_text("Syntax:\n/reddit <post_id>")
         return
-    try:
-        submission_dict = await context.get_submission_raw(context.args[0])
-        submission = await context.parse_submission(submission_dict)
-        await context.send_reddit_post(update.effective_chat.id, submission)
-    except Exception as e:
-        await context.bot.send_message(chat_id = OWNER_USER_ID, text = f"{repr(e)} in post {context.args[0]}")
-        logging.error(traceback.format_exc())
+    await send_reddit(update.effective_chat.id, await context.get_submission_raw(context.args[0]), context)
 
 
 
@@ -56,26 +50,25 @@ async def reddit_posts(update: Update, context: RedditContext):
         return
     submissions = await context.get_subreddit_submissions_raw(context.args[0], context.args[1] if len(context.args) > 1 else 10)
     for submission in submissions:
-        try:
-            await context.send_reddit_post(update.effective_chat.id, await context.parse_submission(submission))
-        except Exception as e:
-            await context.bot.send_message(chat_id = OWNER_USER_ID, text = f'{repr(e)} in post {submission["id"]}')
-            logging.error(traceback.format_exc())
+        await send_reddit(update.effective_chat.id, submission, context)
     
 
 
 async def reddit_on_channel(context: RedditContext):
     for channel in settings["channels"]:
-        for submission_dict in await context.get_subreddit_submissions_raw(channel["subreddits"], channel["limit"], channel["sort_by"]):
-            try:
-                submission = await context.parse_submission(submission_dict)
-                if submission.id not in context.bot_data["sent_submissions"][channel["channel"]]:
-                    await context.send_reddit_post(channel["channel"], submission)
-                    context.bot_data["sent_submissions"][channel["channel"]].append(submission.id)
-                    await asyncio.sleep(5)
-            except Exception as e:
-                await context.bot.send_message(chat_id = OWNER_USER_ID, text = f'{repr(e)} in post {submission_dict["id"]}')
-                logging.error(traceback.format_exc())
+        for submission in await context.get_subreddit_submissions_raw(channel["subreddits"], channel["limit"], channel["sort_by"]):
+            if submission["id"] not in context.bot_data["sent_submissions"][channel["channel"]]:
+                await send_reddit(channel["channel"], submission, context)
+                context.bot_data["sent_submissions"][channel["channel"]].append(submission["id"])
+                await asyncio.sleep(5)
+
+
+async def send_reddit(chat_id: str | int, submission: dict, context: RedditContext):
+    try:
+        await context.send_reddit_post(chat_id, await context.parse_submission(submission))
+    except Exception as e:
+        await context.bot.send_message(chat_id = OWNER_USER_ID, text = f'{repr(e)} in post {submission["id"]}')
+        logging.error(traceback.format_exc())
 
 
 async def manual_reddit_on_channel(update: Update, context: RedditContext):
