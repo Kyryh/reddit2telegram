@@ -45,7 +45,7 @@ async def reddit_post(update: Update, context: RedditContext):
         submission = await context.parse_submission(submission_dict)
         await context.send_reddit_post(update.effective_chat.id, submission)
     except Exception as e:
-        await context.bot.send_message(chat_id = OWNER_USER_ID, text = f"{e} in post {context.args[0]}")
+        await context.bot.send_message(chat_id = OWNER_USER_ID, text = f"{repr(e)} in post {context.args[0]}")
         logging.error(traceback.format_exc())
 
 
@@ -59,7 +59,7 @@ async def reddit_posts(update: Update, context: RedditContext):
         try:
             await context.send_reddit_post(update.effective_chat.id, await context.parse_submission(submission))
         except Exception as e:
-            await context.bot.send_message(chat_id = OWNER_USER_ID, text = f'{e} in post {submission["id"]}')
+            await context.bot.send_message(chat_id = OWNER_USER_ID, text = f'{repr(e)} in post {submission["id"]}')
             logging.error(traceback.format_exc())
     
 
@@ -74,7 +74,7 @@ async def reddit_on_channel(context: RedditContext):
                     context.bot_data["sent_submissions"][channel["channel"]].append(submission.id)
                     await asyncio.sleep(5)
             except Exception as e:
-                await context.bot.send_message(chat_id = OWNER_USER_ID, text = f'{e} in post {submission_dict["id"]}')
+                await context.bot.send_message(chat_id = OWNER_USER_ID, text = f'{repr(e)} in post {submission_dict["id"]}')
                 logging.error(traceback.format_exc())
 
 
