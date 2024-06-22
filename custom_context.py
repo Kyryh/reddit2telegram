@@ -64,9 +64,9 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
 
     async def get_subreddits_info(self, subreddits: str) -> list[dict]:
         if self.access_token:
-            req = await self.client.get(f"https://oauth.reddit.com/api/info.json?sr_name={subreddits.replace('+', ',')}")
+            req = await self.client.get(f"https://oauth.reddit.com/api/info.json?sr_name={subreddits.replace('+', ',')}", headers=self.headers)
         else:
-            req = await self.client.get(f"https://www.reddit.com/api/info.json?sr_name={subreddits.replace('+', ',')}")
+            req = await self.client.get(f"https://www.reddit.com/api/info.json?sr_name={subreddits.replace('+', ',')}", headers=self.headers)
         return [subreddit["data"] for subreddit in req.json()["data"]["children"]]
 
     async def all_subreddits_nsfw(self, subreddits: str):
