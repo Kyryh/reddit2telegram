@@ -63,6 +63,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
             self.access_token = req.json()["access_token"]
 
     async def get_subreddits_info(self, subreddits: str) -> list[dict]:
+        await self.update_access_token()
         if self.access_token:
             req = await self.client.get(f"https://oauth.reddit.com/api/info.json?sr_name={subreddits.replace('+', ',')}", headers=self.headers)
         else:
