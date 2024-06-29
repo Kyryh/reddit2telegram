@@ -221,11 +221,17 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
             else:
                 gifs: list = [gif["url"] for gif in s["preview"]["images"][0]["variants"]["gif"]["resolutions"]]
                 gifs.append(s["preview"]["images"][0]["variants"]["gif"]["source"]["url"])
+
+            if s["preview"]["images"][0]["resolutions"]:
+                thumb = s["preview"]["images"][0]["resolutions"][-1]
+            else:
+                thumb = s["preview"]["images"][0]["source"]
+            
             submission.data = RedditGif(
                 gifs[::-1],
-                s["preview"]["images"][0]["resolutions"][-1]["width"],
-                s["preview"]["images"][0]["resolutions"][-1]["height"],
-                s["preview"]["images"][0]["resolutions"][-1]["url"]
+                thumb["width"],
+                thumb["height"],
+                thumb["url"]
             )
         elif s.get("url_overridden_by_dest", "").startswith("https://i.redd"):
             if "preview" in og_s:
