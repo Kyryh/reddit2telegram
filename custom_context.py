@@ -178,13 +178,19 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                     ffmpeg_logger.info(output)
                 result.check_returncode()
 
+                if s["preview"]["images"][0]["resolutions"]:
+                    thumb = s["preview"]["images"][0]["resolutions"][-1]
+                else:
+                    thumb = s["preview"]["images"][0]["source"]
+            
+
                 with open("video.mp4", "rb") as f:
                     submission.data = RedditVideo(
                         [f.read()],
                         s["media"]["reddit_video"]["width"],
                         s["media"]["reddit_video"]["height"],
                         s["media"]["reddit_video"]["duration"],
-                        s["preview"]["images"][0]["resolutions"][-1]["url"]
+                        thumb["url"]
                     )
                 os.remove("video.mp4")
             else:
