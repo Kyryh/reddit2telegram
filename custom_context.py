@@ -1,10 +1,12 @@
 import asyncio
+from collections import defaultdict
 from typing import Any, Callable, Coroutine
 from httpx import AsyncClient
 from telegram.ext import Application, CallbackContext, ExtBot
 from telegram.error import BadRequest
+from telegram.constants import MessageLimit 
 from telegram import InputMediaPhoto, InputMediaVideo, Message
-from html import escape as escape_html, unescape as unescape_html
+from html import unescape as unescape_html
 import textwrap
 import re
 import json
@@ -262,6 +264,35 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                 selftext_html = selftext_html.replace(f"<{match}>", "")
         selftext_html = selftext_html.replace('<span class="md-spoiler-text">', '<span class="tg-spoiler">')
         return selftext_html
+    
+    @staticmethod
+    def fix_tags_single(text: str) -> tuple[str, str]:
+        tags: list[str] = re.findall(r"<(.*?)>", text)
+        tags_count = defaultdict(int)
+        last_tags = defaultdict(list)
+        for tag in tags:
+            effective_tag = tag.replace("/", "").split(" ")[0]
+            if tag[0] != "/":
+                last_tags[effective_tag].append(tag)
+                tags_count[effective_tag] += 1
+            else:
+                tags_count[effective_tag] -= 1
+
+        next_text_prefix = ""
+        for tag, count in tags_count.items():
+            if count > 0:
+                text += "</"+tag*count+">"
+                next_text_prefix += "<"+last_tags[tag].pop()+">"
+        
+        return text, next_text_prefix
+    
+    @staticmethod
+    def fix_tags_multiple(texts: list[str]) -> list[str]:
+        new_texts = list(texts)
+        text_prefix = ""
+        for i in range(len(new_texts)):
+            new_texts[i], text_prefix = RedditContext.fix_tags_single(text_prefix+new_texts[i])
+        return new_texts
 
     async def send_media(self, bot_method: Callable[..., Coroutine[Any, Any, Message]], chat_id: int | str, media: list[str | bytes], **kwargs):
         index = 0
@@ -297,13 +328,8 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
 
     async def send_reddit_post(self, chat_id: int, submission: RedditSubmission, hide_nsfw = True):
         if not submission.data:
-
-            texts = textwrap.wrap(submission.get_text(hide_nsfw), 4000, fix_sentence_endings = False, replace_whitespace = False)
-            if len(texts) > 1 and submission.should_hide(hide_nsfw):
-                texts[0] += "</tg-spoiler>"
-                texts[-1] = "<tg-spoiler>" + texts[-1]
-                for i in range(1, len(texts)-1):
-                    texts[i] = "<tg-spoiler>" + texts[i] + "</tg-spoiler>"
+            texts = textwrap.wrap(submission.get_text(hide_nsfw), MessageLimit.MAX_TEXT_LENGTH, fix_sentence_endings = False, replace_whitespace = False)
+            texts = self.fix_tags_multiple(texts)
             for text in texts:
                 await self.bot.send_message(
                     chat_id = chat_id,
