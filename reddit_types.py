@@ -17,7 +17,7 @@ class RedditSubmission:
 
     def get_text(self, hide_nsfw = True, short = False):
         text = "🔞NSFW🔞\n" if self.nsfw and hide_nsfw else ""
-        text += f"<b>{escape(self.title)}</b>"
+        text += f"<b>{escape(self.title)}</b>" if self.text else escape(self.title)
         if self.text:
             selftext = textwrap.shorten(
                     self.text,
