@@ -341,7 +341,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                 self.bot.send_photo,
                 chat_id,
                 submission.data.resolutions,
-                caption = submission.get_text(hide_nsfw),
+                caption = submission.get_text(hide_nsfw, True),
                 has_spoiler = submission.should_hide(hide_nsfw),
             )
             if not image_sent:
@@ -356,7 +356,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                 chat_id,
                 submission.data.resolutions,
                 duration = submission.data.duration,
-                caption = submission.get_text(hide_nsfw),
+                caption = submission.get_text(hide_nsfw, True),
                 width = submission.data.width,
                 height = submission.data.height,
                 supports_streaming = True,
@@ -371,7 +371,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                 self.bot.send_animation,
                 chat_id,
                 submission.data.resolutions,
-                caption = submission.get_text(hide_nsfw),
+                caption = submission.get_text(hide_nsfw, True),
                 has_spoiler = submission.should_hide(hide_nsfw),
                 width = submission.data.width,
                 height = submission.data.height,
