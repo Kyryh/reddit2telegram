@@ -4,9 +4,10 @@ import textwrap
 import re
 
 class RedditSubmission:
-    def __init__(self, title: str, id: str, text: str, spoiler: bool, nsfw: bool):
+    def __init__(self, title: str, id: str, score: int, text: str, spoiler: bool, nsfw: bool):
         self.title = title
         self.id = id
+        self.score = score
         self.text = text
         self.post_url = "https://redd.it/" + id
         self.spoiler = spoiler

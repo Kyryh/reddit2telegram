@@ -111,6 +111,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
         submission = RedditSubmission(
             s["title"],
             s["id"],
+            s["score"],
             self.parse_selftext(s["selftext_html"] or ""),
             s["spoiler"],
             s["over_18"]
