@@ -1,6 +1,7 @@
 from html import escape
 from telegram.constants import MessageLimit 
 import textwrap
+import re
 
 class RedditSubmission:
     def __init__(self, title: str, id: str, text: str, spoiler: bool, nsfw: bool):
@@ -31,8 +32,13 @@ class RedditSubmission:
                 text += f"\n\n{selftext}"
         text += f"\n\n{escape(self.post_url)}"
         if extra_text:
-            text += "\n"+extra_text
+            text += "\n"+self.format_extra_text(extra_text)
         return text
+    
+    def format_extra_text(self, extra_text: str) -> str:
+        def parser(m: re.Match[str]) -> str:
+            return eval(m.group(1), {"self": self})
+        return re.sub(r"{(.*?)}", parser, extra_text, flags=re.S)
 
 class RedditData:
     pass
