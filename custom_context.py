@@ -326,9 +326,9 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
         return None
 
 
-    async def send_reddit_post(self, chat_id: int, submission: RedditSubmission, hide_nsfw = True):
+    async def send_reddit_post(self, chat_id: int, submission: RedditSubmission, hide_nsfw = True, extra_text: str = None):
         if not submission.data:
-            texts = textwrap.wrap(submission.get_text(hide_nsfw), MessageLimit.MAX_TEXT_LENGTH, fix_sentence_endings = False, replace_whitespace = False)
+            texts = textwrap.wrap(submission.get_text(hide_nsfw=hide_nsfw, extra_text=extra_text), MessageLimit.MAX_TEXT_LENGTH, fix_sentence_endings = False, replace_whitespace = False)
             texts = self.fix_tags_multiple(texts)
             for text in texts:
                 await self.bot.send_message(
@@ -341,7 +341,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                 self.bot.send_photo,
                 chat_id,
                 submission.data.resolutions,
-                caption = submission.get_text(hide_nsfw, True),
+                caption = submission.get_text(hide_nsfw=hide_nsfw, short=True, extra_text=extra_text),
                 has_spoiler = submission.should_hide(hide_nsfw),
             )
             if not image_sent:
@@ -356,7 +356,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                 chat_id,
                 submission.data.resolutions,
                 duration = submission.data.duration,
-                caption = submission.get_text(hide_nsfw, True),
+                caption = submission.get_text(hide_nsfw=hide_nsfw, short=True, extra_text=extra_text),
                 width = submission.data.width,
                 height = submission.data.height,
                 supports_streaming = True,
@@ -371,7 +371,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                 self.bot.send_animation,
                 chat_id,
                 submission.data.resolutions,
-                caption = submission.get_text(hide_nsfw, True),
+                caption = submission.get_text(hide_nsfw=hide_nsfw, short=True, extra_text=extra_text),
                 has_spoiler = submission.should_hide(hide_nsfw),
                 width = submission.data.width,
                 height = submission.data.height,
@@ -383,7 +383,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
         elif isinstance(submission.data, RedditGallery):
             await self.bot.send_message(
                 chat_id = chat_id,
-                text = submission.get_text(hide_nsfw),
+                text = submission.get_text(hide_nsfw=hide_nsfw, extra_text=extra_text),
                 parse_mode="HTML"
             )
             gallery = []

@@ -15,7 +15,7 @@ class RedditSubmission:
     def should_hide(self, hide_nsfw = True):
         return self.spoiler or (self.nsfw and hide_nsfw)
 
-    def get_text(self, hide_nsfw = True, short = False):
+    def get_text(self, hide_nsfw = True, short = False, extra_text: str = None):
         text = "🔞NSFW🔞\n" if self.nsfw and hide_nsfw else ""
         text += f"<b>{escape(self.title)}</b>" if self.text else escape(self.title)
         if self.text:
@@ -30,6 +30,8 @@ class RedditSubmission:
             else:
                 text += f"\n\n{selftext}"
         text += f"\n\n{escape(self.post_url)}"
+        if extra_text:
+            text += "\n"+extra_text
         return text
 
 class RedditData:
