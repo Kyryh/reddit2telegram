@@ -59,6 +59,8 @@ async def reddit_on_channel(context: RedditContext):
     for channel in settings["channels"]:
         hide_nsfw = await context.all_subreddits_nsfw(channel["subreddits"])
         for submission in await context.get_subreddit_submissions_raw(channel["subreddits"], channel["limit"], channel["sort_by"]):
+            if submission["over_18"] and not channel["allow_nsfw"]:
+                continue
             if submission["id"] not in context.bot_data["sent_submissions"][channel["channel"]]:
                 await send_reddit(channel["channel"], submission, context, not hide_nsfw, channel.get("extra_text"))
                 context.bot_data["sent_submissions"][channel["channel"]].append(submission["id"])
