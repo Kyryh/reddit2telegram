@@ -166,36 +166,41 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                         video_urls.append(url)
                 video_urls.insert(0, s["media"]["reddit_video"]["fallback_url"])
 
-                video = audio = None
-                for audio_url in audio_urls:
-                    if video is not None:
-                        break
-                    audio_size = await self.get_media_size(audio_url)
-                    for video_url in video_urls:
-                        if await self.get_media_size(video_url) + audio_size < 50_000_000:
-                            video = video_url
-                            audio = audio_url
+                if audio_urls:
+                    video = audio = None
+                    for audio_url in audio_urls:
+                        if video is not None:
                             break
+                        audio_size = await self.get_media_size(audio_url)
+                        for video_url in video_urls:
+                            if await self.get_media_size(video_url) + audio_size < 50_000_000:
+                                video = video_url
+                                audio = audio_url
+                                break
 
-                result = subprocess.run(
-                    ["ffmpeg", "-i", video, "-i", audio, "-y", "-v", "warning", "-c", "copy", "video.mp4"],
-                    capture_output=True,
-                    text=True
-                )
-                output = f"{result.stdout}\n{result.stderr}"
-                if not output.isspace():
-                    ffmpeg_logger.info(output)
-                result.check_returncode()
-
-                with open("video.mp4", "rb") as f:
-                    submission.data = RedditVideo(
-                        [f.read()],
-                        s["media"]["reddit_video"]["width"],
-                        s["media"]["reddit_video"]["height"],
-                        s["media"]["reddit_video"]["duration"],
-                        thumb["url"]
+                    result = subprocess.run(
+                        ["ffmpeg", "-i", video, "-i", audio, "-y", "-v", "warning", "-c", "copy", "video.mp4"],
+                        capture_output=True,
+                        text=True
                     )
-                os.remove("video.mp4")
+                    output = f"{result.stdout}\n{result.stderr}"
+                    if not output.isspace():
+                        ffmpeg_logger.info(output)
+                    result.check_returncode()
+                    with open("video.mp4", "rb") as f:
+                        videos = [f.read()]
+                    os.remove("video.mp4")
+
+                else:
+                    videos = video_urls
+
+                submission.data = RedditVideo(
+                    videos,
+                    s["media"]["reddit_video"]["width"],
+                    s["media"]["reddit_video"]["height"],
+                    s["media"]["reddit_video"]["duration"],
+                    thumb["url"]
+                )
             else:
                 raise Exception("The video is too big and ffmpeg was not found")
             
