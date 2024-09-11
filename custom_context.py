@@ -208,6 +208,8 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
             for media in s["gallery_data"]["items"]:
                 media_id = media["media_id"]
                 metadata = s["media_metadata"][media_id]
+                if metadata["status"] != "valid":
+                    continue
                 gallery.append(RedditGalleryMedia(
                     media = (
                         metadata["s"].get("gif") or
