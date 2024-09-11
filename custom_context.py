@@ -178,7 +178,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                                 audio = audio_url
                                 break
 
-                    result = subprocess.run(
+                    result: subprocess.CompletedProcess = subprocess.run(
                         ["ffmpeg", "-i", video, "-i", audio, "-y", "-v", "warning", "-c", "copy", "video.mp4"],
                         capture_output=True,
                         text=True
