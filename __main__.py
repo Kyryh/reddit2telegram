@@ -11,7 +11,7 @@ import traceback
 from os import getenv
 from ratelimiter import RateLimiter
 from collections import defaultdict 
-
+from posters import Poster
 
 __import__("dotenv").load_dotenv()
 
@@ -67,9 +67,9 @@ async def reddit_on_channel(context: RedditContext):
                 await asyncio.sleep(5)
 
 
-async def send_reddit(chat_id: str | int, submission: dict, context: RedditContext, hide_nsfw = True, extra_text: str = None):
+async def send_reddit(chat_id: str | int, submission: dict, context: RedditContext):
     try:
-        await context.send_reddit_post(chat_id, await context.parse_submission(submission), hide_nsfw, extra_text)
+        await context.send_reddit_post(chat_id, Poster(await context.parse_submission(submission)))
     except Exception as e:
         await context.bot.send_message(chat_id = OWNER_USER_ID, text = f'{repr(e)} in post {submission["id"]}')
         logging.error(traceback.format_exc())

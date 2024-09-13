@@ -13,6 +13,7 @@ import json
 import subprocess
 import logging
 import os
+from posters import Poster
 from reddit_types import *
 
 ffmpeg_logger = logging.getLogger("ffmpeg")
@@ -334,9 +335,10 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
         return None
 
 
-    async def send_reddit_post(self, chat_id: int, submission: RedditSubmission, hide_nsfw = True, extra_text: str = None):
+    async def send_reddit_post(self, chat_id: int, submission_poster: Poster):
+        submission = submission_poster.submission
         if not submission.data:
-            texts = textwrap.wrap(submission.get_text(hide_nsfw=hide_nsfw, extra_text=extra_text), MessageLimit.MAX_TEXT_LENGTH, fix_sentence_endings = False, replace_whitespace = False)
+            texts = textwrap.wrap(submission_poster.get_text(), MessageLimit.MAX_TEXT_LENGTH, fix_sentence_endings = False, replace_whitespace = False)
             texts = self.fix_tags_multiple(texts)
             for text in texts:
                 await self.bot.send_message(
@@ -349,8 +351,8 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                 self.bot.send_photo,
                 chat_id,
                 submission.data.resolutions,
-                caption = submission.get_text(hide_nsfw=hide_nsfw, short=True, extra_text=extra_text),
-                has_spoiler = submission.should_hide(hide_nsfw),
+                caption = submission_poster.get_text(short = True),
+                has_spoiler = submission_poster.should_hide(),
             )
             if not image_sent:
                 logger.warning("Failed sending image as photo, sending it as url instead")
@@ -364,11 +366,11 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                 chat_id,
                 submission.data.resolutions,
                 duration = submission.data.duration,
-                caption = submission.get_text(hide_nsfw=hide_nsfw, short=True, extra_text=extra_text),
+                caption = submission_poster.get_text(short = True),
                 width = submission.data.width,
                 height = submission.data.height,
                 supports_streaming = True,
-                has_spoiler = submission.should_hide(hide_nsfw),
+                has_spoiler = submission_poster.should_hide(),
                 thumbnail = (await self.client.get(submission.data.thumbnail)).content if submission.data.thumbnail else None
             )
             if not video_sent:
@@ -379,8 +381,8 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                 self.bot.send_animation,
                 chat_id,
                 submission.data.resolutions,
-                caption = submission.get_text(hide_nsfw=hide_nsfw, short=True, extra_text=extra_text),
-                has_spoiler = submission.should_hide(hide_nsfw),
+                caption = submission_poster.get_text(short = True),
+                has_spoiler = submission_poster.should_hide(),
                 width = submission.data.width,
                 height = submission.data.height,
                 thumbnail = (await self.client.get(submission.data.thumbnail)).content if submission.data.thumbnail else None
@@ -391,9 +393,10 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
         elif isinstance(submission.data, RedditGallery):
             await self.bot.send_message(
                 chat_id = chat_id,
-                text = submission.get_text(hide_nsfw=hide_nsfw, extra_text=extra_text),
+                text = submission_poster.get_text(),
                 parse_mode="HTML"
             )
+            spoiler = submission_poster.should_hide()
             gallery = []
             gallery_lower = [] 
             for item in submission.data.items:
@@ -413,7 +416,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                     InputMedia(
                         media,
                         item.caption,
-                        has_spoiler=submission.should_hide(hide_nsfw)
+                        has_spoiler = spoiler
                     )
                 )
                 if media_lower is not None:
@@ -421,7 +424,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                         InputMedia(
                             media_lower,
                             item.caption,
-                            has_spoiler=submission.should_hide(hide_nsfw)
+                            has_spoiler = spoiler
                         )
                     )
 
