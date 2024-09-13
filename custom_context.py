@@ -400,24 +400,26 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                 match item.type:
                     case "Image":
                         InputMedia = InputMediaPhoto
+                        media = item.media
+                        media_lower = item.media_lower
                     case "AnimatedImage":
                         InputMedia = InputMediaVideo
+                        media = (await self.client.get(item.media)).content
+                        media_lower = (await self.client.get(item.media_lower)).content if item.media_lower else None
                     case _:
                         raise Exception(f"Unsupported gallery media type ({item.type})")
 
                 gallery.append(
                     InputMedia(
-                        item.media if item.type == "Image" else
-                        (await self.client.get(item.media)).content,
+                        media,
                         item.caption,
                         has_spoiler=submission.should_hide(hide_nsfw)
                     )
                 )
-                if item.media_lower is not None:
+                if media_lower is not None:
                     gallery_lower.append(
                         InputMedia(
-                            item.media_lower if item.type == "Image" else
-                            (await self.client.get(item.media_lower)).content,
+                            media_lower,
                             item.caption,
                             has_spoiler=submission.should_hide(hide_nsfw)
                         )
