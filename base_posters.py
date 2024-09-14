@@ -46,7 +46,7 @@ class NSFWPoster(Poster):
     def get_text(self, short = False):
         return super().get_text(short).removeprefix("🔞NSFW🔞\n")
     
-def get_channel_posters():
+def get_channel_posters() -> list[type[Poster]]:
     import sys, inspect
     def is_channel_poster(obj):
         return inspect.isclass(obj) and issubclass(obj, Poster) and obj.subreddits and obj.chat
