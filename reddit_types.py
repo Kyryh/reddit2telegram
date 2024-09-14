@@ -1,8 +1,9 @@
 class RedditSubmission:
-    def __init__(self, title: str, id: str, score: int, text: str, spoiler: bool, nsfw: bool):
+    def __init__(self, title: str, id: str, score: int, flair: str | None, text: str, spoiler: bool, nsfw: bool):
         self.title = title
         self.id = id
         self.score = score
+        self.flair = flair
         self.text = text
         self.post_url = "https://redd.it/" + id
         self.spoiler = spoiler

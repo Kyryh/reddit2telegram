@@ -113,6 +113,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
             s["title"],
             s["id"],
             s["score"],
+            s["link_flair_text"],
             self.parse_selftext(s["selftext_html"] or ""),
             s["spoiler"],
             s["over_18"]
