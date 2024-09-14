@@ -4,7 +4,7 @@ from telegram.constants import MessageLimit
 import textwrap
 
 class Poster:
-    subreddits: list[str] = None
+    subreddits: str = ""
     chat: str | int = None
     limit: int = 10
     sort_by: str = "hot"
@@ -47,8 +47,7 @@ class NSFWPoster(Poster):
         return super().get_text(short).removeprefix("🔞NSFW🔞\n")
     
 def get_channel_posters() -> list[type[Poster]]:
-    import sys, inspect
+    import inspect, posters
     def is_channel_poster(obj):
         return inspect.isclass(obj) and issubclass(obj, Poster) and obj.subreddits and obj.chat
-    current_module = sys.modules[__name__]
-    return [cls[1] for cls in inspect.getmembers(current_module, is_channel_poster)]
+    return [cls[1] for cls in inspect.getmembers(posters, is_channel_poster)]

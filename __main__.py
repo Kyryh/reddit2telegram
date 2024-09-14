@@ -6,12 +6,11 @@ import asyncio
 from datetime import datetime, timedelta
 import pytz
 from custom_context import RedditContext
-import json
 import traceback
 from os import getenv
 from ratelimiter import RateLimiter
 from collections import defaultdict 
-from posters import Poster
+from base_posters import Poster, get_channel_posters
 
 __import__("dotenv").load_dotenv()
 
@@ -29,7 +28,7 @@ logging.basicConfig(
 
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
-settings = json.load(open("settings.json"))
+channel_posters = get_channel_posters()
 
 def datetime_round(dt: datetime, minutes: int) -> datetime:
     minutes_delta = timedelta(minutes=minutes)
@@ -56,20 +55,17 @@ async def reddit_posts(update: Update, context: RedditContext):
 
 
 async def reddit_on_channel(context: RedditContext):
-    for channel in settings["channels"]:
-        hide_nsfw = await context.all_subreddits_nsfw(channel["subreddits"])
-        for submission in await context.get_subreddit_submissions_raw(channel["subreddits"], channel["limit"], channel["sort_by"]):
-            if submission["over_18"] and not channel["allow_nsfw"]:
-                continue
-            if submission["id"] not in context.bot_data["sent_submissions"][channel["channel"]]:
-                await send_reddit(channel["channel"], submission, context, not hide_nsfw, channel.get("extra_text"))
-                context.bot_data["sent_submissions"][channel["channel"]].append(submission["id"])
+    for poster in channel_posters:
+        for submission in await context.get_subreddit_submissions_raw(poster.subreddits, poster.limit, poster.sort_by):
+            if submission["id"] not in context.bot_data["sent_submissions"][poster.chat]:
+                await send_reddit(poster.chat, submission, context, poster)
+                context.bot_data["sent_submissions"][poster.chat].append(submission["id"])
                 await asyncio.sleep(5)
 
 
-async def send_reddit(chat_id: str | int, submission: dict, context: RedditContext):
+async def send_reddit(chat_id: str | int, submission: dict, context: RedditContext, poster = Poster):
     try:
-        await context.send_reddit_post(chat_id, Poster(await context.parse_submission(submission)))
+        await context.send_reddit_post(chat_id, poster(await context.parse_submission(submission)))
     except Exception as e:
         await context.bot.send_message(chat_id = OWNER_USER_ID, text = f'{repr(e)} in post {submission["id"]}')
         logging.error(traceback.format_exc())
@@ -80,8 +76,7 @@ async def manual_reddit_on_channel(update: Update, context: RedditContext):
 
 
 async def unpinner(update: Update, context: RedditContext):
-    group_chats = [(await context.bot.get_chat(channel["channel"])).linked_chat_id for channel in settings["channels"]]
-    if update.effective_chat.id in group_chats:
+    if update.effective_chat.id in context.bot_data["group_chats"]:
         try:
             await update.effective_message.unpin()
         except BadRequest:
@@ -89,8 +84,7 @@ async def unpinner(update: Update, context: RedditContext):
 
 async def post_init(application: Application):
     application.bot_data.setdefault("sent_submissions", defaultdict(list))
-
-
+    application.bot_data["group_chats"] = [(await application.bot.get_chat(poster.chat)).linked_chat_id for poster in channel_posters]
 
 def main():
     application = (
@@ -124,7 +118,9 @@ def main():
     application.add_handler(CommandHandler('manual_reddit_on_channel', manual_reddit_on_channel, filters.User(OWNER_USER_ID)))
     application.add_handler(MessageHandler(filters.IS_AUTOMATIC_FORWARD, unpinner))
 
-    job.run_repeating(reddit_on_channel, interval=settings["interval"]*60, first=datetime_round(datetime.now(pytz.UTC), settings["interval"]))
+    minutes_interval = 30
+
+    job.run_repeating(reddit_on_channel, interval=minutes_interval*60, first=datetime_round(datetime.now(pytz.UTC), minutes_interval))
 
     application.run_polling() 
 

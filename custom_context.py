@@ -13,7 +13,7 @@ import json
 import subprocess
 import logging
 import os
-from base_posters import Poster
+from posters import Poster
 from reddit_types import *
 
 ffmpeg_logger = logging.getLogger("ffmpeg")
