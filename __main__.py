@@ -10,7 +10,7 @@ import traceback
 from os import getenv
 from ratelimiter import RateLimiter
 from collections import defaultdict 
-from base_posters import Poster, get_channel_posters
+from base_posters import Poster, NSFWPoster, get_channel_posters
 
 __import__("dotenv").load_dotenv()
 
@@ -39,7 +39,9 @@ async def reddit_post(update: Update, context: RedditContext):
     if not context.args:
         await update.effective_message.reply_text("Syntax:\n/reddit <post_id>")
         return
-    await send_reddit(update.effective_chat.id, await context.get_submission_raw(context.args[0]), context)
+    nsfw = await context.all_subreddits_nsfw(context.args[0])
+    submissions = await context.get_submission_raw(context.args[0])
+    await send_reddit(update.effective_chat.id, submissions, context, NSFWPoster if nsfw else Poster)
 
 
 
@@ -48,9 +50,9 @@ async def reddit_posts(update: Update, context: RedditContext):
         await update.effective_message.reply_text("Syntax:\n/reddit <subreddit> <number_of_posts (optional)>")
         return
     submissions = await context.get_subreddit_submissions_raw(context.args[0], context.args[1] if len(context.args) > 1 else 10)
-    hide_nsfw = await context.all_subreddits_nsfw(context.args[0])
+    nsfw = await context.all_subreddits_nsfw(context.args[0])
     for submission in submissions:
-        await send_reddit(update.effective_chat.id, submission, context, not hide_nsfw)
+        await send_reddit(update.effective_chat.id, submission, context, NSFWPoster if nsfw else Poster)
     
 
 
@@ -63,7 +65,7 @@ async def reddit_on_channel(context: RedditContext):
                 await asyncio.sleep(5)
 
 
-async def send_reddit(chat_id: str | int, submission: dict, context: RedditContext, poster = Poster):
+async def send_reddit(chat_id: str | int, submission: dict, context: RedditContext, poster: type[Poster]):
     try:
         await context.send_reddit_post(chat_id, poster(await context.parse_submission(submission)))
     except Exception as e:
