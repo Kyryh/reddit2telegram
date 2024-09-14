@@ -67,7 +67,9 @@ async def reddit_on_channel(context: RedditContext):
 
 async def send_reddit(chat_id: str | int, submission: dict, context: RedditContext, poster: type[Poster]):
     try:
-        await context.send_reddit_post(chat_id, poster(await context.parse_submission(submission)))
+        submission_poster = poster(await context.parse_submission(submission))
+        if submission_poster.should_post():
+            await context.send_reddit_post(chat_id, submission_poster)
     except Exception as e:
         await context.bot.send_message(chat_id = OWNER_USER_ID, text = f'{repr(e)} in post {submission["id"]}')
         logging.error(traceback.format_exc())
