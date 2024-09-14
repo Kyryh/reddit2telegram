@@ -1,8 +1,3 @@
-from html import escape
-from telegram.constants import MessageLimit 
-import textwrap
-import re
-
 class RedditSubmission:
     def __init__(self, title: str, id: str, score: int, text: str, spoiler: bool, nsfw: bool):
         self.title = title
