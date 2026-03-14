@@ -1,4 +1,4 @@
-from typing import Any, Callable, Coroutine
+from typing import Any, Callable, Coroutine, Dict, List
 from telegram.ext import BaseRateLimiter
 from telegram.error import RetryAfter
 import asyncio
@@ -8,23 +8,23 @@ logger = logging.getLogger("ratelimiter")
 
 
 class RateLimiter(BaseRateLimiter):
-    async def initialize(self) -> Coroutine[Any, Any, None]:
+    async def initialize(self) -> None:
         pass
 
-    async def shutdown(self) -> Coroutine[Any, Any, None]:
+    async def shutdown(self) -> None:
         pass
 
     async def process_request(
         self,
         callback: Callable[
-            ..., Coroutine[Any, Any, bool | dict[str] | list[dict[str]]]
+            ..., Coroutine[Any, Any, bool | Dict[str, Any] | List[Dict[str, Any]]]
         ],
         args: Any,
-        kwargs: dict[str],
+        kwargs: Dict[str, Any],
         endpoint: str,
-        data: dict[str],
+        data: Dict[str, Any],
         rate_limit_args: Any | None,
-    ) -> Coroutine[Any, Any, bool | dict[str] | list[dict[str]]]:
+    ) -> bool | Dict[str, Any] | List[Dict[str, Any]]:
         while True:
             try:
                 return await callback(*args, **kwargs)

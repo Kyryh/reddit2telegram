@@ -17,7 +17,7 @@ class RedditSubmission:
         self.post_url = "https://redd.it/" + id
         self.spoiler = spoiler
         self.nsfw = nsfw
-        self.data: "RedditData" = None
+        self.data: "RedditData | None" = None
 
 
 class RedditData:

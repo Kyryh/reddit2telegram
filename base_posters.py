@@ -6,7 +6,7 @@ import textwrap
 
 class Poster:
     subreddits: str = ""
-    chat: str | int = None
+    chat: str | int | None = None
     limit: int = 10
     sort_by: str = "hot"
 
@@ -57,7 +57,7 @@ def get_channel_posters() -> list[type[Poster]]:
     import inspect, posters
 
     def is_channel_poster(obj):
-        return (
+        return bool(
             inspect.isclass(obj)
             and issubclass(obj, Poster)
             and obj.subreddits

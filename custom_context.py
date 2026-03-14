@@ -1,6 +1,6 @@
 import asyncio
 from collections import defaultdict
-from typing import Any, Callable, Coroutine
+from typing import Any, Callable, Coroutine, cast
 from httpx import AsyncClient
 from telegram.ext import Application, CallbackContext, ExtBot
 from telegram.error import BadRequest
@@ -14,7 +14,14 @@ import subprocess
 import logging
 import os
 from posters import Poster
-from reddit_types import *
+from reddit_types import (
+    RedditSubmission,
+    RedditVideo,
+    RedditGalleryMedia,
+    RedditGallery,
+    RedditGif,
+    RedditImage,
+)
 
 ffmpeg_logger = logging.getLogger("ffmpeg")
 logger = logging.getLogger("bot")
@@ -237,9 +244,9 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
                         [
                             "ffmpeg",
                             "-i",
-                            video,
+                            cast(str, video),
                             "-i",
-                            audio,
+                            cast(str, audio),
                             "-y",
                             "-v",
                             "warning",
