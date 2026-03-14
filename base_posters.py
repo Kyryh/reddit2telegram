@@ -1,7 +1,8 @@
 from reddit_types import RedditSubmission
 from html import escape
-from telegram.constants import MessageLimit 
+from telegram.constants import MessageLimit
 import textwrap
+
 
 class Poster:
     subreddits: str = ""
@@ -17,17 +18,21 @@ class Poster:
 
     def should_hide(self):
         return self.submission.spoiler or self.submission.nsfw
-    
-    def get_text(self, short = False):
+
+    def get_text(self, short=False):
         submission = self.submission
         text = "🔞NSFW🔞\n" if submission.nsfw else ""
         if submission.text:
             text += f"<b>{escape(submission.title)}</b>"
-            selftext = textwrap.shorten(
+            selftext = (
+                textwrap.shorten(
                     submission.text,
-                    MessageLimit.CAPTION_LENGTH-128,
-                    replace_whitespace = False
-                ) if short else submission.text
+                    MessageLimit.CAPTION_LENGTH - 128,
+                    replace_whitespace=False,
+                )
+                if short
+                else submission.text
+            )
 
             if self.should_hide():
                 text += f"\n\n<tg-spoiler>{selftext}</tg-spoiler>"
@@ -39,15 +44,24 @@ class Poster:
         text += f"\n\n{escape(submission.post_url)}"
         return text
 
+
 class NSFWPoster(Poster):
     def should_hide(self):
         return self.submission.spoiler
-    
-    def get_text(self, short = False):
+
+    def get_text(self, short=False):
         return super().get_text(short).removeprefix("🔞NSFW🔞\n")
-    
+
+
 def get_channel_posters() -> list[type[Poster]]:
     import inspect, posters
+
     def is_channel_poster(obj):
-        return inspect.isclass(obj) and issubclass(obj, Poster) and obj.subreddits and obj.chat
+        return (
+            inspect.isclass(obj)
+            and issubclass(obj, Poster)
+            and obj.subreddits
+            and obj.chat
+        )
+
     return [cls[1] for cls in inspect.getmembers(posters, is_channel_poster)]
