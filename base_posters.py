@@ -41,7 +41,7 @@ class Poster:
         else:
             text += escape(submission.title)
 
-        text += f"\n\n{escape(submission.post_url)}"
+        text += f'\n\n<a href="{escape(submission.post_url_long)}">{escape(submission.post_url)}</a>'
         return text
 
 

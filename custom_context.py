@@ -167,6 +167,7 @@ class RedditContext(CallbackContext[ExtBot, dict, dict, dict]):
         submission = RedditSubmission(
             s["title"],
             s["id"],
+            s["permalink"],
             s["score"],
             s["link_flair_text"],
             self.parse_selftext(s["selftext_html"] or ""),

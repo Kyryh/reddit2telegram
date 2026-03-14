@@ -3,6 +3,7 @@ class RedditSubmission:
         self,
         title: str,
         id: str,
+        permalink: str,
         score: int,
         flair: str | None,
         text: str,
@@ -15,6 +16,7 @@ class RedditSubmission:
         self.flair = flair
         self.text = text
         self.post_url = "https://redd.it/" + id
+        self.post_url_long = "https://www.reddit.com" + permalink
         self.spoiler = spoiler
         self.nsfw = nsfw
         self.data: "RedditData | None" = None
